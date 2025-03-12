@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+scrapy
+transformers
+torch
+pandas
+pydantic
+python-dotenv
+slack-sdk

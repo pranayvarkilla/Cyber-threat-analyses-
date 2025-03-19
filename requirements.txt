@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+transformers
+torch
+requests
+beautifulsoup4
+scrapy
+pymongo
+psycopg2
+python-dotenv
+slack-sdk
+python-telegram-bot

@@ -10,3 +10,6 @@ psycopg2
 python-dotenv
 slack-sdk
 python-telegram-bot
+pydantic
+
+

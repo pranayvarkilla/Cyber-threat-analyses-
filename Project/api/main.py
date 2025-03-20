@@ -12,10 +12,24 @@ classification_model = pipeline("zero-shot-classification", model="facebook/bart
 summarization_model = pipeline("summarization", model="facebook/bart-large-mnli")
 
 # Function Definitions
+import re
+
 def extract_iocs(text):
-    entities = ner_model(text)
-    iocs = [entity["word"] for entity in entities if entity["entity"] in ["IP", "DOMAIN", "CVE"]]
-    return iocs
+    # Regex patterns
+    domain_pattern = r'\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b'
+    ip_pattern = r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'
+    cve_pattern = r'\bCVE-\d{4}-\d{4,7}\b'
+    
+    domains = re.findall(domain_pattern, text)
+    ips = re.findall(ip_pattern, text)
+    cves = re.findall(cve_pattern, text)
+
+    return {
+        "domains": domains,
+        "ips": ips,
+        "cves": cves
+    }
+
 
 def classify_threat(text):
     candidate_labels = ["Phishing", "Malware", "Ransomware", "DDoS", "Data Breach", "Benign"]

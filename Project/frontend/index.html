@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyber Threat Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        input[type="text"] {
+            width: 400px;
+            padding: 10px;
+            margin-right: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #results {
+            background-color: #fff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cyber Threat Intelligence Analyzer</h1>
+
+    <input type="text" id="urlInput" placeholder="Enter a URL to analyze">
+    <button id="analyzeBtn">Analyze</button>
+
+    <div id="results"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const analyzeBtn = document.getElementById("analyzeBtn");
+
+            analyzeBtn.addEventListener("click", async () => {
+                const urlInput = document.getElementById("urlInput").value.trim();
+                const resultDiv = document.getElementById("results");
+
+                if (!urlInput) {
+                    resultDiv.innerHTML = "<span style='color:red;'>Please enter a valid URL.</span>";
+                    return;
+                }
+
+                resultDiv.innerHTML = "Analyzing...";
+
+                try {
+                    const response = await fetch("http://127.0.0.1:8000/analyze-url", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ url: urlInput })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.detail || "Failed to analyze");
+                    }
+
+                    resultDiv.innerHTML = `
+                        <strong>Summary:</strong> ${data.summary}<br><br>
+                        <strong>Threat Classification:</strong> ${data.threat_classification}<br><br>
+                        <strong>Final Verdict:</strong> ${data.final_verdict}<br><br>
+                        <strong>IOCs:</strong> <pre>${JSON.stringify(data.ioc_extracted, null, 2)}</pre>
+                    `;
+                } catch (error) {
+                    resultDiv.innerHTML = `<span style="color:red;">Error: ${error.message}</span>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

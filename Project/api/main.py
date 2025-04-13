@@ -1,3 +1,4 @@
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -51,38 +52,25 @@ def fetch_and_analyze(url):
         response.raise_for_status()
         text = response.text
 
-        print("Extracting IoCs...")
-        iocs = extract_iocs(text)
+# Analyze fetched data
+def analyze_text(text):
+    # Extract IoCs
+    iocs = extract_iocs(text)
+    print("Extracted IoCs:", iocs)
+    
+    # Classify threat
+    threat = classify_threat(text)
+    print("Threat Type:", threat)
+    
+    # Summarize text
+    summary = summarize_text(text)
+    print("Summary:", summary)
 
-        print("Classifying threat...")
-        threat = classify_threat(text)
-
-        print("Summarizing text...")
-        summary = summarize_text(text)
-
-        print("Analysis complete.")
-        return {
-            "url": url,
-            "summary": summary,
-            "ioc_extracted": iocs,
-            "threat_classification": threat,
-            "final_verdict": "Harmful" if threat != "Harmless" else "Harmless"
-        }
-
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching URL: {str(e)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis error: {str(e)}")
-
-# --- API Endpoint ---
-@app.post("/analyze-url")
-async def analyze_url(input: URLInput):
-    return fetch_and_analyze(input.url)
-
-# --- Serve Frontend ---
-frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
-app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-
-@app.get("/")
-async def root():
-    return FileResponse(os.path.join(frontend_path, "index.html"))
+if __name__ == "__main__":
+    url = "https://www.cisa.gov/news-events/news"  # You can change the URL
+    text = fetch_data_from_url(url)
+    
+    if text:
+        analyze_text(text)
+    else:
+        print("Failed to fetch data from the URL.")

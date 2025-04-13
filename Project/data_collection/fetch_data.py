@@ -41,7 +41,11 @@ def fetch_and_analyze(url):
     except requests.exceptions.RequestException as e:
         return {"error": str(e)}
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     url = input("Paste the URL to analyze: ")
     result = fetch_and_analyze(url)
+<<<<<<< HEAD
     print(result if "error" not in result else f"Error: {result['error']}")
+=======
+    print(result if "error" not in result else f"Error: {result['error']}")
+>>>>>>> 413d422567b197dce3d7e798e2cd6068e903c5da

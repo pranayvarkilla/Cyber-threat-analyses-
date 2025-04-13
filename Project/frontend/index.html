@@ -1,98 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Cyber Threat Analyzer</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-            background-color: #f4f4f4;
-        }
+  <meta charset="UTF-8" />
+  <title>Cyber Threat Analyzer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      padding: 40px;
+      color: #333;
+    }
 
-        h1 {
-            color: #333;
-        }
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: #222;
+    }
 
-        input[type="text"] {
-            width: 400px;
-            padding: 10px;
-            margin-right: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
+    .container {
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      max-width: 800px;
+      margin: auto;
+    }
 
-        button {
-            padding: 10px 20px;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+    input[type="text"] {
+      width: 70%;
+      padding: 12px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
 
-        button:hover {
-            background-color: #0056b3;
-        }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
 
-        #results {
-            background-color: #fff;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 5px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            white-space: pre-wrap;
-        }
-    </style>
+    #analyzeBtn {
+      background-color: #007bff;
+      color: white;
+    }
+
+    #analyzeBtn:hover {
+      background-color: #0056b3;
+    }
+
+    #exportBtn {
+      background-color: #28a745;
+      color: white;
+    }
+
+    #exportBtn:hover {
+      background-color: #1e7e34;
+    }
+
+    #results {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      white-space: pre-wrap;
+      min-height: 60px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 <body>
-    <h1>Cyber Threat Intelligence Analyzer</h1>
-
+  <div class="container">
+    <h1>🔍 Cyber Threat Analyzer</h1>
     <input type="text" id="urlInput" placeholder="Enter a URL to analyze">
     <button id="analyzeBtn">Analyze</button>
+    <button id="exportBtn" style="display:none;">Export Report as PDF</button>
 
     <div id="results"></div>
+  </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const analyzeBtn = document.getElementById("analyzeBtn");
+  <script>
+    let data = null;
 
-            analyzeBtn.addEventListener("click", async () => {
-                const urlInput = document.getElementById("urlInput").value.trim();
-                const resultDiv = document.getElementById("results");
+    document.addEventListener("DOMContentLoaded", () => {
+      const analyzeBtn = document.getElementById("analyzeBtn");
+      const exportBtn = document.getElementById("exportBtn");
+      const resultDiv = document.getElementById("results");
 
-                if (!urlInput) {
-                    resultDiv.innerHTML = "<span style='color:red;'>Please enter a valid URL.</span>";
-                    return;
-                }
+      analyzeBtn.addEventListener("click", async () => {
+        const urlInput = document.getElementById("urlInput").value.trim();
+        resultDiv.innerHTML = "";
 
-                resultDiv.innerHTML = "Analyzing...";
+        if (!urlInput) {
+          resultDiv.innerHTML = "<span style='color:red;'>Please enter a valid URL.</span>";
+          exportBtn.style.display = "none";
+          return;
+        }
 
-                try {
-                    const response = await fetch("http://127.0.0.1:8000/analyze-url", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({ url: urlInput })
-                    });
+        resultDiv.innerHTML = "Analyzing... <span class='spinner'></span>";
+        exportBtn.style.display = "none";
 
-                    const data = await response.json();
-                    if (!response.ok) {
-                        throw new Error(data.detail || "Failed to analyze");
-                    }
+        try {
+          const response = await fetch("http://127.0.0.1:8000/analyze-url", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ url: urlInput })
+          });
 
-                    resultDiv.innerHTML = `
-                        <strong>Summary:</strong> ${data.summary}<br><br>
-                        <strong>Threat Classification:</strong> ${data.threat_classification}<br><br>
-                        <strong>Final Verdict:</strong> ${data.final_verdict}<br><br>
-                        <strong>IOCs:</strong> <pre>${JSON.stringify(data.ioc_extracted, null, 2)}</pre>
-                    `;
-                } catch (error) {
-                    resultDiv.innerHTML = `<span style="color:red;">Error: ${error.message}</span>`;
-                }
-            });
+          data = await response.json();
+          if (!response.ok) throw new Error(data.detail || "Failed to analyze");
+
+          resultDiv.innerHTML = `
+            <strong>Summary:</strong> ${data.summary}<br><br>
+            <strong>Threat Classification:</strong> ${data.threat_classification}<br><br>
+            <strong>Final Verdict:</strong> ${data.final_verdict}<br><br>
+            <strong>IOCs:</strong> <pre>${JSON.stringify(data.ioc_extracted, null, 2)}</pre>
+          `;
+          exportBtn.style.display = "inline-block";
+
+        } catch (error) {
+          resultDiv.innerHTML = `<span style="color:red;">❌ Error: ${error.message}</span>`;
+          exportBtn.style.display = "none";
+        }
+      });
+
+      exportBtn.onclick = () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(14);
+        doc.text("Cyber Threat Analyzer Report", 10, 20);
+
+        let y = 30;
+        const maxLineWidth = 180;
+
+        doc.setFontSize(11);
+        doc.text("Summary:", 10, y); y += 6;
+        y = doc.splitTextToSize(data.summary, maxLineWidth).reduce((yy, line) => {
+          doc.text(line, 10, yy);
+          return yy + 6;
+        }, y);
+
+        doc.text("Threat Classification:", 10, y); y += 6;
+        y = doc.splitTextToSize(data.threat_classification, maxLineWidth).reduce((yy, line) => {
+          doc.text(line, 10, yy);
+          return yy + 6;
+        }, y);
+
+        doc.text("Final Verdict:", 10, y); y += 6;
+        y = doc.splitTextToSize(data.final_verdict, maxLineWidth).reduce((yy, line) => {
+          doc.text(line, 10, yy);
+          return yy + 6;
+        }, y);
+
+        doc.text("IOCs Extracted:", 10, y); y += 6;
+        const iocs = JSON.stringify(data.ioc_extracted, null, 2).split('\n');
+        iocs.forEach(line => {
+          if (y >= 280) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.text(line, 10, y);
+          y += 6;
         });
-    </script>
+
+        doc.save("cyber-threat-report.pdf");
+      };
+    });
+  </script>
 </body>
 </html>
